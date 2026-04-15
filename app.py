@@ -66,6 +66,151 @@ st.html(f"""
     footer {{visibility: hidden;}}
     header {{visibility: hidden;}}
 
+    /* ══════════════════════════════════════════════════════════════
+       PERMANENT DARK THEME FIX — All dropdowns, popovers, menus,
+       selectboxes, multiselects, inputs, and form controls.
+       This block targets the BaseWeb UI library components that
+       Streamlit uses internally. Without these overrides, dropdowns
+       render with white/light backgrounds that clash with dark themes.
+       ══════════════════════════════════════════════════════════════ */
+
+    /* ── Selectbox / Dropdown trigger button ── */
+    .stSelectbox [data-baseweb="select"],
+    .stMultiSelect [data-baseweb="select"],
+    div[data-baseweb="select"] {{
+        background-color: {CARD_BG} !important;
+        border-color: rgba(255,215,0,0.25) !important;
+        color: {TEXT} !important;
+        -webkit-text-fill-color: {TEXT} !important;
+    }}
+    .stSelectbox [data-baseweb="select"]:hover,
+    .stMultiSelect [data-baseweb="select"]:hover {{
+        border-color: {GOLD} !important;
+    }}
+    .stSelectbox [data-baseweb="select"] *,
+    .stMultiSelect [data-baseweb="select"] * {{
+        color: {TEXT} !important;
+        -webkit-text-fill-color: {TEXT} !important;
+    }}
+    /* Arrow icon inside select */
+    .stSelectbox svg, .stMultiSelect svg {{
+        fill: {GOLD} !important;
+    }}
+
+    /* ── Dropdown popover / menu (the floating list) ── */
+    [data-baseweb="popover"],
+    [data-baseweb="popover"] > div {{
+        background-color: {CARD_BG} !important;
+        border: 1px solid rgba(255,215,0,0.3) !important;
+        border-radius: 8px !important;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.5) !important;
+    }}
+    [data-baseweb="menu"],
+    [data-baseweb="menu"] > div,
+    ul[role="listbox"],
+    ul[role="listbox"] > li {{
+        background-color: {CARD_BG} !important;
+        color: {TEXT} !important;
+        -webkit-text-fill-color: {TEXT} !important;
+    }}
+    /* Dropdown list items */
+    li[role="option"] {{
+        background-color: {CARD_BG} !important;
+        color: {TEXT} !important;
+        -webkit-text-fill-color: {TEXT} !important;
+    }}
+    li[role="option"]:hover,
+    li[role="option"][aria-selected="true"],
+    li[role="option"]:focus {{
+        background-color: {MID_BLUE} !important;
+        color: {GOLD} !important;
+        -webkit-text-fill-color: {GOLD} !important;
+    }}
+    /* Highlighted / focused option */
+    [data-baseweb="menu"] [data-highlighted="true"],
+    [data-baseweb="menu"] [aria-selected="true"] {{
+        background-color: {MID_BLUE} !important;
+        color: {GOLD} !important;
+        -webkit-text-fill-color: {GOLD} !important;
+    }}
+
+    /* ── Text inputs, number inputs, text areas ── */
+    .stTextInput input, .stNumberInput input, .stTextArea textarea {{
+        background-color: {CARD_BG} !important;
+        border-color: rgba(255,215,0,0.25) !important;
+        color: {TEXT} !important;
+        -webkit-text-fill-color: {TEXT} !important;
+    }}
+    .stTextInput input:focus, .stNumberInput input:focus, .stTextArea textarea:focus {{
+        border-color: {GOLD} !important;
+        box-shadow: 0 0 0 1px {GOLD} !important;
+    }}
+
+    /* ── Labels for all form widgets ── */
+    .stSelectbox label, .stMultiSelect label, .stTextInput label,
+    .stNumberInput label, .stTextArea label, .stSlider label,
+    .stRadio label, .stCheckbox label {{
+        color: {GOLD} !important;
+        -webkit-text-fill-color: {GOLD} !important;
+        font-weight: 600 !important;
+    }}
+
+    /* ── Radio buttons ── */
+    .stRadio [role="radiogroup"] label {{
+        color: {TEXT} !important;
+        -webkit-text-fill-color: {TEXT} !important;
+    }}
+    .stRadio [role="radiogroup"] label[data-checked="true"] {{
+        color: {GOLD} !important;
+        -webkit-text-fill-color: {GOLD} !important;
+    }}
+
+    /* ── Expander (also needs dark body) ── */
+    details[data-testid="stExpander"] {{
+        background: {CARD_BG} !important;
+        border: 1px solid rgba(255,215,0,0.15) !important;
+        border-radius: 8px !important;
+    }}
+    details[data-testid="stExpander"] summary {{
+        color: {GOLD} !important;
+        -webkit-text-fill-color: {GOLD} !important;
+    }}
+    details[data-testid="stExpander"] > div {{
+        color: {TEXT} !important;
+        -webkit-text-fill-color: {TEXT} !important;
+    }}
+
+    /* ── Slider labels and value ── */
+    .stSlider [data-testid="stTickBarMin"],
+    .stSlider [data-testid="stTickBarMax"],
+    .stSlider [data-baseweb="slider"] div[role="slider"] + div {{
+        color: {TEXT} !important;
+        -webkit-text-fill-color: {TEXT} !important;
+    }}
+
+    /* ── Dataframe / table dark theme ── */
+    .stDataFrame, .stTable {{
+        border: 1px solid rgba(255,215,0,0.15) !important;
+        border-radius: 8px !important;
+    }}
+
+    /* ── Catch-all for any BaseWeb input wrapper ── */
+    div[data-baseweb="input"],
+    div[data-baseweb="base-input"],
+    div[data-baseweb="input-container"] {{
+        background-color: {CARD_BG} !important;
+        border-color: rgba(255,215,0,0.25) !important;
+    }}
+    div[data-baseweb="input"] *,
+    div[data-baseweb="base-input"] * {{
+        color: {TEXT} !important;
+        -webkit-text-fill-color: {TEXT} !important;
+    }}
+
+    /* ══════════════════════════════════════════════════════════════
+       END OF PERMANENT DARK THEME FIX
+       ══════════════════════════════════════════════════════════════ */
+
     /* Tabs styling */
     .stTabs [data-baseweb="tab-list"] {{
         gap: 4px;
@@ -106,24 +251,9 @@ st.html(f"""
         font-family: 'Playfair Display', serif !important;
     }}
 
-    /* Expander */
-    .streamlit-expanderHeader {{
-        background: {CARD_BG} !important;
-        border: 1px solid rgba(255,215,0,0.2) !important;
-        border-radius: 8px !important;
-        color: {GOLD} !important;
-        -webkit-text-fill-color: {GOLD} !important;
-    }}
-
-    /* Dataframe */
-    .stDataFrame {{
-        border: 1px solid rgba(255,215,0,0.15);
-        border-radius: 8px;
-    }}
-
-    /* Slider */
-    .stSlider [data-baseweb="slider"] [role="slider"] {{
-        background: {GOLD} !important;
+    /* Metric delta colors */
+    [data-testid="stMetricDelta"] svg {{
+        fill: {TEXT} !important;
     }}
 </style>
 """)
