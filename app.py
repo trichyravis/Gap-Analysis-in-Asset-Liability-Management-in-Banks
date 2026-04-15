@@ -80,27 +80,46 @@ st.html(f"""
     div[data-baseweb="select"] {{
         background-color: {CARD_BG} !important;
         border-color: rgba(255,215,0,0.25) !important;
-        color: {TEXT} !important;
-        -webkit-text-fill-color: {TEXT} !important;
     }}
     .stSelectbox [data-baseweb="select"]:hover,
     .stMultiSelect [data-baseweb="select"]:hover {{
         border-color: {GOLD} !important;
     }}
-    .stSelectbox [data-baseweb="select"] *,
-    .stMultiSelect [data-baseweb="select"] * {{
+    /* Force ALL text inside select to be light — covers value, placeholder, icons */
+    .stSelectbox [data-baseweb="select"] span,
+    .stSelectbox [data-baseweb="select"] div,
+    .stSelectbox [data-baseweb="select"] p,
+    .stSelectbox [data-baseweb="select"] input,
+    .stMultiSelect [data-baseweb="select"] span,
+    .stMultiSelect [data-baseweb="select"] div,
+    .stMultiSelect [data-baseweb="select"] p,
+    .stMultiSelect [data-baseweb="select"] input,
+    div[data-baseweb="select"] span,
+    div[data-baseweb="select"] div,
+    div[data-baseweb="select"] p {{
         color: {TEXT} !important;
         -webkit-text-fill-color: {TEXT} !important;
+        background-color: transparent !important;
     }}
-    /* Arrow icon inside select */
+    /* Arrow / chevron icon inside select */
     .stSelectbox svg, .stMultiSelect svg {{
         fill: {GOLD} !important;
     }}
+    /* The value-container inside BaseWeb select */
+    [data-baseweb="select"] [class*="ValueContainer"],
+    [data-baseweb="select"] [class*="valueContainer"],
+    [data-baseweb="select"] [class*="singleValue"],
+    [data-baseweb="select"] [class*="placeholder"] {{
+        color: {TEXT} !important;
+        -webkit-text-fill-color: {TEXT} !important;
+    }}
 
-    /* ── Dropdown popover / menu (the floating list) ── */
+    /* ── Dropdown popover / menu (the floating list that opens) ── */
     [data-baseweb="popover"],
-    [data-baseweb="popover"] > div {{
+    [data-baseweb="popover"] > div,
+    [data-baseweb="popover"] > div > div {{
         background-color: {CARD_BG} !important;
+        background: {CARD_BG} !important;
         border: 1px solid rgba(255,215,0,0.3) !important;
         border-radius: 8px !important;
         box-shadow: 0 8px 24px rgba(0,0,0,0.5) !important;
@@ -110,26 +129,40 @@ st.html(f"""
     ul[role="listbox"],
     ul[role="listbox"] > li {{
         background-color: {CARD_BG} !important;
+        background: {CARD_BG} !important;
         color: {TEXT} !important;
         -webkit-text-fill-color: {TEXT} !important;
     }}
-    /* Dropdown list items */
+    /* Every individual dropdown list item */
     li[role="option"] {{
         background-color: {CARD_BG} !important;
+        background: {CARD_BG} !important;
         color: {TEXT} !important;
         -webkit-text-fill-color: {TEXT} !important;
     }}
+    li[role="option"] * {{
+        color: {TEXT} !important;
+        -webkit-text-fill-color: {TEXT} !important;
+        background: transparent !important;
+    }}
     li[role="option"]:hover,
+    li[role="option"]:hover *,
     li[role="option"][aria-selected="true"],
-    li[role="option"]:focus {{
+    li[role="option"][aria-selected="true"] *,
+    li[role="option"]:focus,
+    li[role="option"]:focus * {{
         background-color: {MID_BLUE} !important;
+        background: {MID_BLUE} !important;
         color: {GOLD} !important;
         -webkit-text-fill-color: {GOLD} !important;
     }}
     /* Highlighted / focused option */
     [data-baseweb="menu"] [data-highlighted="true"],
-    [data-baseweb="menu"] [aria-selected="true"] {{
+    [data-baseweb="menu"] [data-highlighted="true"] *,
+    [data-baseweb="menu"] [aria-selected="true"],
+    [data-baseweb="menu"] [aria-selected="true"] * {{
         background-color: {MID_BLUE} !important;
+        background: {MID_BLUE} !important;
         color: {GOLD} !important;
         -webkit-text-fill-color: {GOLD} !important;
     }}
@@ -1018,7 +1051,8 @@ elif page == "📋 Balance Sheet & Assumptions":
             textfont=dict(size=9, color=TEXT)))
         fig_wf.update_layout(**plotly_theme(),
             title=dict(text="NII Waterfall — Income & Expense Breakdown ($mm)", font=dict(color=GOLD, size=16)),
-            height=450, margin=dict(l=50, r=20, t=60, b=80), xaxis=dict(tickangle=-30))
+            height=450, margin=dict(l=50, r=20, t=60, b=80))
+        fig_wf.update_xaxes(tickangle=-30)
         st.plotly_chart(fig_wf, use_container_width=True, key="nii_waterfall")
 
 
