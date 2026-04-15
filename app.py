@@ -198,17 +198,43 @@ st.html(f"""
         -webkit-text-fill-color: {GOLD} !important;
     }}
 
-    /* ── Expander (also needs dark body) ── */
+    /* ── Expander — ultra-aggressive dark styling ── */
     details[data-testid="stExpander"] {{
         background: {CARD_BG} !important;
-        border: 1px solid rgba(255,215,0,0.15) !important;
+        border: 1px solid rgba(255,215,0,0.2) !important;
         border-radius: 8px !important;
     }}
-    details[data-testid="stExpander"] summary {{
+    /* Summary bar (the clickable header) */
+    details[data-testid="stExpander"] summary,
+    details[data-testid="stExpander"] summary *,
+    details[data-testid="stExpander"] summary span,
+    details[data-testid="stExpander"] summary p,
+    details[data-testid="stExpander"] summary div,
+    .streamlit-expanderHeader,
+    .streamlit-expanderHeader *,
+    [data-testid="stExpanderToggleIcon"],
+    [data-testid="stMarkdownContainer"] {{
         color: {GOLD} !important;
         -webkit-text-fill-color: {GOLD} !important;
+        background: transparent !important;
+        background-color: transparent !important;
     }}
-    details[data-testid="stExpander"] > div {{
+    /* Arrow/chevron icon in expander */
+    details[data-testid="stExpander"] summary svg {{
+        fill: {GOLD} !important;
+        color: {GOLD} !important;
+    }}
+    /* Expanded body content */
+    details[data-testid="stExpander"] > div,
+    details[data-testid="stExpander"] > div *,
+    details[data-testid="stExpander"] [data-testid="stExpanderDetails"],
+    details[data-testid="stExpander"] [data-testid="stExpanderDetails"] * {{
+        color: {TEXT} !important;
+        -webkit-text-fill-color: {TEXT} !important;
+        background-color: transparent !important;
+    }}
+    /* Override the stMarkdown inside expander specifically */
+    details[data-testid="stExpander"] [data-testid="stMarkdownContainer"] p {{
         color: {TEXT} !important;
         -webkit-text-fill-color: {TEXT} !important;
     }}
@@ -287,6 +313,67 @@ st.html(f"""
     /* Metric delta colors */
     [data-testid="stMetricDelta"] svg {{
         fill: {TEXT} !important;
+    }}
+
+    /* ══════════════════════════════════════════════════════════════
+       NUCLEAR GLOBAL OVERRIDES — Kill any remaining light backgrounds
+       that Streamlit injects on any element within the app.
+       These are intentionally broad to catch edge cases.
+       ══════════════════════════════════════════════════════════════ */
+
+    /* Kill all white/light backgrounds on any Streamlit block container */
+    .stApp [data-testid="stVerticalBlock"] > div,
+    .stApp .element-container,
+    .stApp .block-container {{
+        background-color: transparent !important;
+    }}
+
+    /* Force dark on all markdown text globally */
+    [data-testid="stMarkdownContainer"],
+    [data-testid="stMarkdownContainer"] p,
+    [data-testid="stMarkdownContainer"] span,
+    [data-testid="stMarkdownContainer"] li,
+    [data-testid="stMarkdownContainer"] h1,
+    [data-testid="stMarkdownContainer"] h2,
+    [data-testid="stMarkdownContainer"] h3,
+    [data-testid="stMarkdownContainer"] h4,
+    [data-testid="stMarkdownContainer"] code {{
+        color: {TEXT} !important;
+        -webkit-text-fill-color: {TEXT} !important;
+    }}
+
+    /* Expander summary hover/focus — prevent Streamlit's grey overlay */
+    details[data-testid="stExpander"] summary:hover,
+    details[data-testid="stExpander"] summary:focus,
+    details[data-testid="stExpander"] summary:active,
+    details[data-testid="stExpander"] summary:hover *,
+    details[data-testid="stExpander"] summary:focus *,
+    .streamlit-expanderHeader:hover,
+    .streamlit-expanderHeader:focus {{
+        background: transparent !important;
+        background-color: transparent !important;
+        outline: none !important;
+        box-shadow: none !important;
+    }}
+
+    /* Selectbox dropdown — open state: kill the white overlay */
+    [data-baseweb="popover"] ul,
+    [data-baseweb="popover"] ul li,
+    [data-baseweb="popover"] ul li div,
+    [data-baseweb="popover"] ul li span {{
+        background-color: {CARD_BG} !important;
+        background: {CARD_BG} !important;
+        color: {TEXT} !important;
+        -webkit-text-fill-color: {TEXT} !important;
+    }}
+    [data-baseweb="popover"] ul li:hover,
+    [data-baseweb="popover"] ul li:hover *,
+    [data-baseweb="popover"] ul li[aria-selected="true"],
+    [data-baseweb="popover"] ul li[aria-selected="true"] * {{
+        background-color: {MID_BLUE} !important;
+        background: {MID_BLUE} !important;
+        color: {GOLD} !important;
+        -webkit-text-fill-color: {GOLD} !important;
     }}
 </style>
 """)
