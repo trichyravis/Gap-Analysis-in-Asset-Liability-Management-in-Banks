@@ -659,11 +659,11 @@ with st.sidebar:
     page = st.radio(
         "📑 Navigation",
         [
-            "🏠 ALM Dashboard",
+            "📋 Balance Sheet & Assumptions",
             "📊 Liquidity Gap Analysis",
             "📈 Rate Sensitivity Gap",
-            "💰 NII Impact Simulator",
-            "📋 Balance Sheet & Assumptions",
+            "💰 NII Impact & Earnings at Risk",
+            "🏠 ALM Dashboard",
             "📚 ALM Knowledge Base",
         ],
         index=0,
@@ -716,11 +716,116 @@ st.html(f"""
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# PAGE 1: BALANCE SHEET & ASSUMPTIONS (Starting point — the input data)
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+if page == "📋 Balance Sheet & Assumptions":
+    section_header("Step 1 → Balance Sheet & Interest Rate Assumptions",
+        "Starting point — all ALM analysis begins with the bank's balance sheet and rate structure (Assumptions Sheet)", "📋")
+
+    tab1, tab2, tab3 = st.tabs(["📊 Balance Sheet", "📐 Interest Rates", "📈 NII Waterfall"])
+
+    with tab1:
+        c1, c2 = st.columns(2)
+        with c1:
+            fig = go.Figure(go.Pie(
+                labels=list(BS_ASSETS.keys()),
+                values=[v["amount"] for v in BS_ASSETS.values()],
+                hole=0.5, textinfo="label+percent",
+                marker=dict(colors=[MID_BLUE, TEAL, GREEN, LIGHT_BLUE, MUTED],
+                    line=dict(color=BLUE, width=2)),
+                textfont=dict(size=10, color=TEXT)))
+            fig.update_layout(**plotly_theme(),
+                title=dict(text="Asset Composition", font=dict(color=GOLD, size=15)),
+                height=380, margin=dict(l=20, r=20, t=50, b=20),
+                annotations=[dict(text="<b>$95B</b>", x=0.5, y=0.5, font_size=18, font_color=GOLD, showarrow=False)])
+            st.plotly_chart(fig, use_container_width=True, key="bs_asset_pie")
+
+        with c2:
+            fig2 = go.Figure(go.Pie(
+                labels=list(BS_LIABILITIES.keys()),
+                values=[v["amount"] for v in BS_LIABILITIES.values()],
+                hole=0.5, textinfo="label+percent",
+                marker=dict(colors=[RED, ORANGE, PURPLE, MUTED, GOLD],
+                    line=dict(color=BLUE, width=2)),
+                textfont=dict(size=10, color=TEXT)))
+            fig2.update_layout(**plotly_theme(),
+                title=dict(text="Liability & Equity Composition", font=dict(color=GOLD, size=15)),
+                height=380, margin=dict(l=20, r=20, t=50, b=20),
+                annotations=[dict(text="<b>$95B</b>", x=0.5, y=0.5, font_size=18, font_color=GOLD, showarrow=False)])
+            st.plotly_chart(fig2, use_container_width=True, key="bs_liab_pie")
+
+        # Tables
+        st.html(f"<h4 style='color:{GOLD}; -webkit-text-fill-color:{GOLD};'>Assets</h4>")
+        adf = pd.DataFrame([{"Category": k, "Amount ($mm)": f"${v['amount']:,}", "% of Total": f"{v['pct']:.1f}%"}
+            for k, v in BS_ASSETS.items()])
+        st.dataframe(adf, use_container_width=True, hide_index=True)
+
+        st.html(f"<h4 style='color:{GOLD}; -webkit-text-fill-color:{GOLD};'>Liabilities & Equity</h4>")
+        ldf = pd.DataFrame([{"Category": k, "Amount ($mm)": f"${v['amount']:,}", "% of Total": f"{v['pct']:.1f}%"}
+            for k, v in BS_LIABILITIES.items()])
+        st.dataframe(ldf, use_container_width=True, hide_index=True)
+
+    with tab2:
+        st.html(f"<h4 style='color:{GOLD}; -webkit-text-fill-color:{GOLD};'>Asset Interest Rates (from Assumptions Sheet)</h4>")
+        ardf = pd.DataFrame(ASSET_RATES)
+        ardf["Rate"] = ardf["Rate"].apply(lambda x: f"{x:.2f}%")
+        ardf["Amount"] = ardf["Amount"].apply(lambda x: f"${x:,}")
+        st.dataframe(ardf, use_container_width=True, hide_index=True)
+
+        st.html(f"<h4 style='color:{GOLD}; -webkit-text-fill-color:{GOLD};'>Liability Interest Rates (from Assumptions Sheet)</h4>")
+        lrdf = pd.DataFrame(LIABILITY_RATES)
+        lrdf["Rate"] = lrdf["Rate"].apply(lambda x: f"{x:.2f}%")
+        lrdf["Amount"] = lrdf["Amount"].apply(lambda x: f"${x:,}")
+        st.dataframe(lrdf, use_container_width=True, hide_index=True)
+
+        st.html(f"<h4 style='color:{GOLD}; -webkit-text-fill-color:{GOLD};'>Rate Shock Scenarios (from Assumptions Sheet)</h4>")
+        rsdf = pd.DataFrame(RATE_SHOCKS)
+        st.dataframe(rsdf, use_container_width=True, hide_index=True)
+
+        info_card("💡 Key Observation",
+            f"Weighted Avg Asset Yield ≈ <b>7.4%</b> | Weighted Avg Funding Cost ≈ <b>4.2%</b> → "
+            f"NIM = <b>3.16%</b>, comfortably above the 2.00% prudential threshold.", GOLD)
+
+    with tab3:
+        inc = [("Cash & CB", 340), ("Govt Sec", 1430), ("Loans", 4938), ("Interbank", 330)]
+        exp = [("CASA", -980), ("Term Dep", -2275), ("Borrowings", -696), ("Other", -80)]
+
+        labels = [i[0] for i in inc] + ["Total Income"] + [e[0] for e in exp] + ["Total Expense", "NET NII"]
+        vals = [i[1] for i in inc] + [sum(v for _, v in inc)] + [e[1] for e in exp] + [sum(v for _, v in exp)] + \
+               [sum(v for _, v in inc) + sum(v for _, v in exp)]
+
+        fig_wf = go.Figure(go.Waterfall(
+            x=labels, y=vals,
+            measure=["relative"]*4 + ["total"] + ["relative"]*4 + ["total", "total"],
+            connector=dict(line=dict(color=MUTED, width=1)),
+            increasing=dict(marker_color=GREEN), decreasing=dict(marker_color=RED),
+            totals=dict(marker_color=GOLD),
+            textposition="outside", text=[f"${abs(v):,.0f}" for v in vals],
+            textfont=dict(size=9, color=TEXT)))
+        fig_wf.update_layout(**plotly_theme(),
+            title=dict(text="NII Waterfall — Income & Expense Breakdown ($mm)", font=dict(color=GOLD, size=16)),
+            height=450, margin=dict(l=50, r=20, t=60, b=80))
+        fig_wf.update_xaxes(tickangle=-30)
+        st.plotly_chart(fig_wf, use_container_width=True, key="nii_waterfall")
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # PAGE: ALM DASHBOARD
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-if page == "🏠 ALM Dashboard":
-    section_header("ALM Risk Dashboard", "Key risk metrics at a glance — all thresholds per RBI / Basel III", "📊")
+elif page == "🏠 ALM Dashboard":
+    section_header("Step 5 → ALM Risk Dashboard",
+        "Consolidate all metrics from Steps 1–4 → assess against regulatory thresholds (Dashboard Sheet)", "🏠")
+
+    info_card("🔄 How This Dashboard Is Derived",
+        "<b>Step 1</b> Balance Sheet ($95B total assets, rate structure) → "
+        "<b>Step 2</b> Liquidity Gap (maturity mismatch → Cum Gap –$6.1B at 1Y) → "
+        "<b>Step 3</b> Rate Sensitivity Gap (repricing mismatch → Cum 1Y Rate Gap $3.6B, RSA/RSL 1.06x) → "
+        "<b>Step 4</b> NII Impact ($3,600mm × rate shock → ΔNII; Base NII $3,005mm, NIM 3.16%) → "
+        "<b>Step 5</b> Dashboard below consolidates all metrics vs regulatory thresholds.",
+        MID_BLUE)
+
+    st.html("<div style='height:8px;'></div>")
 
     c1, c2, c3, c4 = st.columns(4)
     with c1: metric_card("Short-Term Gap (≤3M) / TA", "–4.6%", "> –10%", "PASS", "Medium")
@@ -803,8 +908,8 @@ if page == "🏠 ALM Dashboard":
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 elif page == "📊 Liquidity Gap Analysis":
-    section_header("Structural Liquidity Gap Analysis",
-        "Maturity profile of ALL assets & liabilities by contractual maturity date (Liquidity Gap Sheet)", "📊")
+    section_header("Step 2 → Structural Liquidity Gap Analysis",
+        "Distribute assets & liabilities by contractual maturity → compute funding gaps (Liquidity Gap Sheet)", "📊")
 
     ta, tl, pg, cg = compute_gaps(ASSETS_LIQUIDITY, LIABILITIES_LIQUIDITY)
 
@@ -895,8 +1000,8 @@ elif page == "📊 Liquidity Gap Analysis":
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 elif page == "📈 Rate Sensitivity Gap":
-    section_header("Interest Rate Sensitivity Gap Analysis",
-        "Rate-sensitive assets vs liabilities by next repricing date (Rate Sensitivity Gap Sheet)", "📈")
+    section_header("Step 3 → Interest Rate Sensitivity Gap Analysis",
+        "Classify rate-sensitive items by next repricing date → measure interest rate risk (Rate Sensitivity Gap Sheet)", "📈")
 
     rsa_t = [sum(x) for x in zip(*RSA_DATA.values())]
     rsl_t = [sum(x) for x in zip(*RSL_DATA.values())]
@@ -988,9 +1093,9 @@ elif page == "📈 Rate Sensitivity Gap":
 # PAGE: NII IMPACT SIMULATOR
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-elif page == "💰 NII Impact Simulator":
-    section_header("NII Impact Simulator — Earnings at Risk",
-        "Interactive rate shock analysis (formula from Rate Sensitivity Gap Sheet)", "💰")
+elif page == "💰 NII Impact & Earnings at Risk":
+    section_header("Step 4 → NII Impact Analysis — Earnings at Risk",
+        "Apply rate shocks to the cumulative 1-year rate gap → quantify NII change (Rate Sensitivity Gap Sheet)", "💰")
 
     c1, c2 = st.columns(2)
     with c1:
@@ -1051,96 +1156,6 @@ elif page == "💰 NII Impact Simulator":
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # PAGE: BALANCE SHEET & ASSUMPTIONS
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-elif page == "📋 Balance Sheet & Assumptions":
-    section_header("Balance Sheet & Interest Rate Assumptions",
-        "From Assumptions Sheet — Sample National Bank, 31-Mar-2025", "📋")
-
-    tab1, tab2, tab3 = st.tabs(["📊 Balance Sheet", "📐 Interest Rates", "📈 NII Waterfall"])
-
-    with tab1:
-        c1, c2 = st.columns(2)
-        with c1:
-            fig = go.Figure(go.Pie(
-                labels=list(BS_ASSETS.keys()),
-                values=[v["amount"] for v in BS_ASSETS.values()],
-                hole=0.5, textinfo="label+percent",
-                marker=dict(colors=[MID_BLUE, TEAL, GREEN, LIGHT_BLUE, MUTED],
-                    line=dict(color=BLUE, width=2)),
-                textfont=dict(size=10, color=TEXT)))
-            fig.update_layout(**plotly_theme(),
-                title=dict(text="Asset Composition", font=dict(color=GOLD, size=15)),
-                height=380, margin=dict(l=20, r=20, t=50, b=20),
-                annotations=[dict(text="<b>$95B</b>", x=0.5, y=0.5, font_size=18, font_color=GOLD, showarrow=False)])
-            st.plotly_chart(fig, use_container_width=True, key="bs_asset_pie")
-
-        with c2:
-            fig2 = go.Figure(go.Pie(
-                labels=list(BS_LIABILITIES.keys()),
-                values=[v["amount"] for v in BS_LIABILITIES.values()],
-                hole=0.5, textinfo="label+percent",
-                marker=dict(colors=[RED, ORANGE, PURPLE, MUTED, GOLD],
-                    line=dict(color=BLUE, width=2)),
-                textfont=dict(size=10, color=TEXT)))
-            fig2.update_layout(**plotly_theme(),
-                title=dict(text="Liability & Equity Composition", font=dict(color=GOLD, size=15)),
-                height=380, margin=dict(l=20, r=20, t=50, b=20),
-                annotations=[dict(text="<b>$95B</b>", x=0.5, y=0.5, font_size=18, font_color=GOLD, showarrow=False)])
-            st.plotly_chart(fig2, use_container_width=True, key="bs_liab_pie")
-
-        # Tables
-        st.html(f"<h4 style='color:{GOLD}; -webkit-text-fill-color:{GOLD};'>Assets</h4>")
-        adf = pd.DataFrame([{"Category": k, "Amount ($mm)": f"${v['amount']:,}", "% of Total": f"{v['pct']:.1f}%"}
-            for k, v in BS_ASSETS.items()])
-        st.dataframe(adf, use_container_width=True, hide_index=True)
-
-        st.html(f"<h4 style='color:{GOLD}; -webkit-text-fill-color:{GOLD};'>Liabilities & Equity</h4>")
-        ldf = pd.DataFrame([{"Category": k, "Amount ($mm)": f"${v['amount']:,}", "% of Total": f"{v['pct']:.1f}%"}
-            for k, v in BS_LIABILITIES.items()])
-        st.dataframe(ldf, use_container_width=True, hide_index=True)
-
-    with tab2:
-        st.html(f"<h4 style='color:{GOLD}; -webkit-text-fill-color:{GOLD};'>Asset Interest Rates (from Assumptions Sheet)</h4>")
-        ardf = pd.DataFrame(ASSET_RATES)
-        ardf["Rate"] = ardf["Rate"].apply(lambda x: f"{x:.2f}%")
-        ardf["Amount"] = ardf["Amount"].apply(lambda x: f"${x:,}")
-        st.dataframe(ardf, use_container_width=True, hide_index=True)
-
-        st.html(f"<h4 style='color:{GOLD}; -webkit-text-fill-color:{GOLD};'>Liability Interest Rates (from Assumptions Sheet)</h4>")
-        lrdf = pd.DataFrame(LIABILITY_RATES)
-        lrdf["Rate"] = lrdf["Rate"].apply(lambda x: f"{x:.2f}%")
-        lrdf["Amount"] = lrdf["Amount"].apply(lambda x: f"${x:,}")
-        st.dataframe(lrdf, use_container_width=True, hide_index=True)
-
-        st.html(f"<h4 style='color:{GOLD}; -webkit-text-fill-color:{GOLD};'>Rate Shock Scenarios (from Assumptions Sheet)</h4>")
-        rsdf = pd.DataFrame(RATE_SHOCKS)
-        st.dataframe(rsdf, use_container_width=True, hide_index=True)
-
-        info_card("💡 Key Observation",
-            f"Weighted Avg Asset Yield ≈ <b>7.4%</b> | Weighted Avg Funding Cost ≈ <b>4.2%</b> → "
-            f"NIM = <b>3.16%</b>, comfortably above the 2.00% prudential threshold.", GOLD)
-
-    with tab3:
-        inc = [("Cash & CB", 340), ("Govt Sec", 1430), ("Loans", 4938), ("Interbank", 330)]
-        exp = [("CASA", -980), ("Term Dep", -2275), ("Borrowings", -696), ("Other", -80)]
-
-        labels = [i[0] for i in inc] + ["Total Income"] + [e[0] for e in exp] + ["Total Expense", "NET NII"]
-        vals = [i[1] for i in inc] + [sum(v for _, v in inc)] + [e[1] for e in exp] + [sum(v for _, v in exp)] + \
-               [sum(v for _, v in inc) + sum(v for _, v in exp)]
-
-        fig_wf = go.Figure(go.Waterfall(
-            x=labels, y=vals,
-            measure=["relative"]*4 + ["total"] + ["relative"]*4 + ["total", "total"],
-            connector=dict(line=dict(color=MUTED, width=1)),
-            increasing=dict(marker_color=GREEN), decreasing=dict(marker_color=RED),
-            totals=dict(marker_color=GOLD),
-            textposition="outside", text=[f"${abs(v):,.0f}" for v in vals],
-            textfont=dict(size=9, color=TEXT)))
-        fig_wf.update_layout(**plotly_theme(),
-            title=dict(text="NII Waterfall — Income & Expense Breakdown ($mm)", font=dict(color=GOLD, size=16)),
-            height=450, margin=dict(l=50, r=20, t=60, b=80))
-        fig_wf.update_xaxes(tickangle=-30)
-        st.plotly_chart(fig_wf, use_container_width=True, key="nii_waterfall")
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
