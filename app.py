@@ -1077,7 +1077,8 @@ elif page == "📈 Rate Sensitivity Gap":
         fig3.update_layout(**plotly_theme(),
             title=dict(text="RSA/RSL Ratio Across Time Buckets", font=dict(color=GOLD, size=16)),
             height=450, margin=dict(l=50, r=20, t=60, b=60), yaxis_title="RSA / RSL Ratio",
-            yaxis=dict(range=[0.5, 2.2]), showlegend=False)
+            showlegend=False)
+        fig3.update_yaxes(range=[0.5, 2.2])
         st.plotly_chart(fig3, use_container_width=True, key="ratio_chart")
 
         c1, c2 = st.columns(2)
